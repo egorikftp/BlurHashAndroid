@@ -8,3 +8,4 @@ dependencyResolutionManagement {
 }
 rootProject.name = "BlurHashAndroid"
 include ':app'
+include ':blurhashAndroid'
