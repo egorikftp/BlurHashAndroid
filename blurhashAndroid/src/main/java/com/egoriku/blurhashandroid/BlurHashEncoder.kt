@@ -9,9 +9,11 @@ import kotlin.math.*
 
 object BlurHashEncoder {
 
-    private fun applyBasisFunction(pixels: IntArray, width: Int, height: Int,
-                                   normalisation: Float, i: Int, j: Int, factors: Array<FloatArray>,
-                                   index: Int) {
+    private fun applyBasisFunction(
+        pixels: IntArray, width: Int, height: Int,
+        normalisation: Float, i: Int, j: Int, factors: Array<FloatArray>,
+        index: Int
+    ) {
         var r = 0f
         var g = 0f
         var b = 0f
@@ -37,12 +39,24 @@ object BlurHashEncoder {
     }
 
     private fun encodeAC(value: FloatArray, maximumValue: Float): Int {
-        val quantR = floor(max(0f,
-                min(18f, floor(signedPow(value[0] / maximumValue, 0.5f) * 9 + 9.5f))))
-        val quantG = floor(max(0f,
-                min(18f, floor(signedPow(value[1] / maximumValue, 0.5f) * 9 + 9.5f))))
-        val quantB = floor(max(0f,
-                min(18f, floor(signedPow(value[2] / maximumValue, 0.5f) * 9 + 9.5f))))
+        val quantR = floor(
+            max(
+                0f,
+                min(18f, floor(signedPow(value[0] / maximumValue, 0.5f) * 9 + 9.5f))
+            )
+        )
+        val quantG = floor(
+            max(
+                0f,
+                min(18f, floor(signedPow(value[1] / maximumValue, 0.5f) * 9 + 9.5f))
+            )
+        )
+        val quantB = floor(
+            max(
+                0f,
+                min(18f, floor(signedPow(value[2] / maximumValue, 0.5f) * 9 + 9.5f))
+            )
+        )
         return round(quantR * 19 * 19 + quantG * 19 + quantB).toInt()
     }
 
@@ -82,26 +96,32 @@ object BlurHashEncoder {
      * @param componentY number of components in the y dimension
      * @return the blur hash
      */
-    private fun encode(pixels: IntArray, width: Int, height: Int, componentX: Int,
-                       componentY: Int): String {
+    private fun encode(
+        pixels: IntArray, width: Int, height: Int, componentX: Int,
+        componentY: Int
+    ): String {
         require(!(componentX < 1 || componentX > 9 || componentY < 1 || componentY > 9)) { "Blur hash must have between 1 and 9 components" }
         require(width * height == pixels.size) { "Width and height must match the pixels array" }
         val factors = Array(componentX * componentY) { FloatArray(3) }
         for (j in 0 until componentY) {
             for (i in 0 until componentX) {
                 val normalisation = if (i == 0 && j == 0) 1f else 2f
-                applyBasisFunction(pixels, width, height, normalisation, i, j, factors,
-                        j * componentX + i)
+                applyBasisFunction(
+                    pixels, width, height, normalisation, i, j, factors,
+                    j * componentX + i
+                )
             }
         }
-        val hash = CharArray(1 + 1 + 4 + 2 * (factors.size - 1)) // size flag + max AC + DC + 2 * AC components
+        val hash =
+            CharArray(1 + 1 + 4 + 2 * (factors.size - 1)) // size flag + max AC + DC + 2 * AC components
         val sizeFlag = componentX - 1 + (componentY - 1) * 9
         encode(sizeFlag, 1, hash, 0)
         val maximumValue: Float
         if (factors.size > 1) {
             val actualMaximumValue = Utils.max(factors, 1, factors.size)
             val quantisedMaximumValue = floor(
-                    max(0f, min(82f, floor(actualMaximumValue * 166 - 0.5f))))
+                max(0f, min(82f, floor(actualMaximumValue * 166 - 0.5f)))
+            )
             maximumValue = (quantisedMaximumValue + 1) / 166
             encode(round(quantisedMaximumValue).toInt(), 1, hash, 1)
         } else {

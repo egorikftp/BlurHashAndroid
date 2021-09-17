@@ -39,5 +39,4 @@ internal object Utils {
         }
         return result
     }
-
 }
